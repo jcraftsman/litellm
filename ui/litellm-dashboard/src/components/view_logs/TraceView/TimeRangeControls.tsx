@@ -27,7 +27,7 @@ const RANGE_LABEL_FORMAT = "MMM D, h:mm A";
 export const rangeLabel = (range: TimeWindow): string =>
   `${moment(range.startMs).format(RANGE_LABEL_FORMAT)} to ${moment(range.endMs).format(RANGE_LABEL_FORMAT)}`;
 
-const SEGMENT = "inline-flex h-7 items-center gap-1.5 px-2.5 text-[13px] outline-none focus-visible:bg-accent";
+const SEGMENT = "inline-flex h-8 items-center gap-1.5 px-3 text-[13px] outline-none focus-visible:bg-accent";
 
 interface TimeRangeControlsProps {
   range: TimeWindow;
@@ -59,15 +59,15 @@ export function TimeRangeControls({
         aria-label="Refresh"
         title="Refresh"
         aria-busy={refreshing}
-        className="inline-flex size-7 items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted/60"
+        className="inline-flex size-8 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
       >
         <RotateCcw className={cn("size-3.5", refreshing && "animate-spin")} />
       </button>
-      <div className="flex items-center divide-x divide-border overflow-hidden rounded-md border border-border bg-card">
+      <div className="flex items-center divide-x divide-background overflow-hidden rounded-lg bg-muted/60">
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="Time range"
-            className={cn(SEGMENT, "text-foreground hover:bg-muted/60")}
+            className={cn(SEGMENT, "text-foreground hover:bg-muted")}
             data-testid="time-range-trigger"
           >
             <span className="tabular-nums">{rangeLabel(range)}</span>
@@ -93,7 +93,9 @@ export function TimeRangeControls({
             onClick={() => onLiveChange(!live)}
             className={cn(
               SEGMENT,
-              live ? "bg-info/10 text-info hover:bg-info/15" : "text-muted-foreground hover:text-foreground",
+              live
+                ? "bg-background text-foreground ring-[1.5px] ring-foreground ring-inset"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             {live ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
