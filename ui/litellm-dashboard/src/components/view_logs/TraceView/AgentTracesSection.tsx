@@ -188,7 +188,7 @@ export function AgentTracesSection({
     openRun(trace !== null && openTrace !== null && runKey(trace) === runKey(openTrace) ? null : trace);
 
   return (
-    <div className="flex min-h-[560px] flex-1 flex-col overflow-hidden border-y border-border bg-card">
+    <div className="flex min-h-[560px] flex-1 flex-col overflow-hidden rounded-xl border border-border bg-background">
       {checkHistory && <TraceHistoryError history={history} />}
       <TracesReceived received={setup.received} />
       <RunDrawer trace={openTrace} runs={runs} accessToken={accessToken} onSelect={openRun} />
@@ -202,7 +202,12 @@ export function AgentTracesSection({
         onStatusChange={setStatus}
       >
         {!demo && (
-          <Button variant="outline" size="sm" onClick={() => setShowSetup(true)} className="shrink-0 gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowSetup(true)}
+            className="h-8 shrink-0 gap-1.5 rounded-lg bg-muted/60 text-[13px] font-normal hover:bg-muted"
+          >
             <ActiveDot />
             Set up tracing
           </Button>
@@ -272,7 +277,7 @@ function RunsFooter({
   return (
     <footer
       data-testid="runs-footer"
-      className="flex h-8 shrink-0 items-center border-t border-border bg-muted/40 px-3 font-mono text-[11px] text-muted-foreground"
+      className="flex h-9 shrink-0 items-center border-t border-border px-3 text-[12px] text-muted-foreground tabular-nums"
     >
       {count} {count === 1 ? "run" : "runs"}
       {zoom && (
@@ -280,7 +285,7 @@ function RunsFooter({
           type="button"
           onClick={() => onResetZoom()}
           aria-label="Clear time zoom"
-          className="ml-3 rounded border border-info/40 bg-info/10 px-1.5 text-info hover:bg-info/20"
+          className="ml-3 rounded-md bg-muted px-2 py-0.5 text-foreground hover:bg-muted/70"
         >
           {moment(zoom.startMs).format("MMM DD, HH:mm")} to {moment(zoom.endMs).format("MMM DD, HH:mm")} ×
         </button>
