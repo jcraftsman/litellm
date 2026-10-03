@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { bandForWindow, bucketRuns, dragUpdate, formatSpan } from "./TracesTimeline";
+import { bandForWindow, bucketDots, bucketRuns, dragUpdate, formatSpan } from "./TracesTimeline";
 import type { TraceSummary } from "./traceTypes";
 
 const HOUR = 3600 * 1000;
@@ -39,6 +39,25 @@ describe("bucketRuns", () => {
     const buckets = bucketRuns([run(HOUR, 3), run(HOUR + 1), run(HOUR + 2, 1), run(5 * HOUR)], range, 10);
     expect(buckets[1]).toMatchObject({ runs: 3, failed: 2 });
     expect(buckets[5]).toMatchObject({ runs: 1, failed: 0 });
+  });
+});
+
+describe("bucketDots", () => {
+  const bucket = (runs: number, failed = 0) => ({ startMs: 0, endMs: 1, runs, failed });
+
+  it("lights no dots for an empty bucket and at least one for any runs", () => {
+    expect(bucketDots(bucket(0), 50)).toEqual({ lit: 0, failed: 0 });
+    expect(bucketDots(bucket(1), 50, 7).lit).toBe(1);
+  });
+
+  it("scales lit dots to the busiest bucket so the tallest column is full", () => {
+    expect(bucketDots(bucket(50), 50, 7).lit).toBe(7);
+    expect(bucketDots(bucket(25), 50, 7).lit).toBe(4);
+  });
+
+  it("shows at least one failed dot for any failure and never more than are lit", () => {
+    expect(bucketDots(bucket(50, 1), 50, 7).failed).toBe(1);
+    expect(bucketDots(bucket(2, 2), 50, 7)).toEqual({ lit: 1, failed: 1 });
   });
 });
 
