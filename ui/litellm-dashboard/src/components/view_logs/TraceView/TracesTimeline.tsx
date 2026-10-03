@@ -73,6 +73,22 @@ interface TracesTimelineProps {
   onSelect: (selection: TimeWindow | null) => void;
 }
 
+const DOT_ROWS = 7;
+
+/** Lit dots for a bucket: at least one when it has runs, failures stacked on top in the accent color. */
+export function bucketDots(bucket: Bucket, max: number, rows = DOT_ROWS): { lit: number; failed: number } {
+  if (bucket.runs === 0) return { lit: 0, failed: 0 };
+  const lit = Math.max(1, Math.round((bucket.runs / max) * rows));
+  const failed = bucket.failed === 0 ? 0 : Math.min(lit, Math.max(1, Math.round((bucket.failed / bucket.runs) * lit)));
+  return { lit, failed };
+}
+
+function dotClass(row: number, lit: number, failed: number, dimmed: boolean): string {
+  if (row >= lit) return "size-[3px] bg-muted-foreground/15";
+  if (dimmed) return "size-[5px] bg-muted-foreground/30";
+  return row >= lit - failed ? "size-[5px] bg-[#eb6b93]" : "size-[5px] bg-[#0011b3] dark:bg-[#8b9bff]";
+}
+
 function BucketBar({
   bucket,
   max,
@@ -84,29 +100,19 @@ function BucketBar({
   dimmed: boolean;
   hovered: boolean;
 }) {
+  const { lit, failed } = bucketDots(bucket, max);
   return (
     <div
-      className="pointer-events-none flex h-full flex-1 flex-col justify-end px-px"
+      className={cn(
+        "pointer-events-none flex h-full flex-1 flex-col-reverse items-center justify-between py-0.5 transition-transform duration-150",
+        hovered && "scale-125",
+      )}
       data-testid="timeline-bucket"
       data-runs={bucket.runs}
     >
-      {bucket.runs > 0 && (
-        <div
-          className={cn(
-            "mx-auto flex w-full max-w-[10px] flex-col overflow-hidden rounded-t-[2px]",
-            dimmed && "bg-muted-foreground/25",
-            !dimmed && (hovered ? "bg-info" : "bg-info/65"),
-          )}
-          style={{ height: `${Math.max(6, (bucket.runs / max) * 100)}%` }}
-        >
-          {bucket.failed > 0 && (
-            <div
-              className="w-full shrink-0 bg-destructive"
-              style={{ height: `${Math.max(2, Math.min(25, (bucket.failed / bucket.runs) * 100))}%` }}
-            />
-          )}
-        </div>
-      )}
+      {Array.from({ length: DOT_ROWS }, (_, row) => (
+        <span key={row} className={cn("rounded-full", dotClass(row, lit, failed, dimmed))} />
+      ))}
     </div>
   );
 }
@@ -114,7 +120,7 @@ function BucketBar({
 function BucketTooltip({ bucket, index }: { bucket: Bucket; index: number }) {
   return (
     <div
-      className="pointer-events-none absolute top-full z-floating mt-1 rounded-md border border-border bg-popover px-2.5 py-1.5 font-mono text-[11px] text-popover-foreground shadow-md"
+      className="pointer-events-none absolute top-full z-floating mt-1 rounded-lg border border-border bg-popover px-2.5 py-1.5 text-[11px] tabular-nums text-popover-foreground shadow-md"
       style={{ left: pct(Math.min(0.8, index / BUCKETS)) }}
       role="tooltip"
     >
@@ -125,7 +131,7 @@ function BucketTooltip({ bucket, index }: { bucket: Bucket; index: number }) {
         {bucket.runs} {bucket.runs === 1 ? "run" : "runs"}
         {bucket.failed > 0 && `, ${bucket.failed} failed`}
       </div>
-      <div className="text-info">drag to zoom</div>
+      <div className="text-muted-foreground">drag to zoom</div>
     </div>
   );
 }
@@ -185,13 +191,12 @@ function SelectionBracket({
   const leftFrac = band.lo / BUCKETS;
   const rightFrac = (band.hi + 1) / BUCKETS;
   const widthPx = (rightFrac - leftFrac) * stripWidth;
-  const handle = "absolute inset-y-0 w-[3px] cursor-ew-resize bg-info";
-  const edgeLabel =
-    "pointer-events-none absolute -top-4 font-mono text-[10px] whitespace-nowrap text-info tabular-nums";
+  const handle = "absolute inset-y-0 w-[3px] cursor-ew-resize rounded-full bg-foreground";
+  const edgeLabel = "pointer-events-none absolute -top-4 text-[10px] whitespace-nowrap text-foreground tabular-nums";
   return (
     <>
       <div
-        className="absolute inset-y-0 cursor-grab rounded-[2px] border border-info bg-info/10 active:cursor-grabbing"
+        className="absolute inset-y-0 cursor-grab rounded-md bg-foreground/5 ring-[1.5px] ring-foreground ring-inset active:cursor-grabbing"
         style={{ left: pct(leftFrac), width: pct(rightFrac - leftFrac) }}
         data-testid="timeline-selection"
         onPointerDown={onHandleDown("move")}
@@ -207,7 +212,7 @@ function SelectionBracket({
           onPointerDown={onHandleDown("resize-hi")}
         />
         {widthPx >= MIN_DURATION_LABEL_PX && (
-          <span className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center font-mono text-[11px] font-medium text-info">
+          <span className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[11px] font-medium text-foreground tabular-nums">
             {formatSpan(window.endMs - window.startMs)}
           </span>
         )}
@@ -239,7 +244,7 @@ function TickAxis({ range }: { range: TimeWindow }) {
           style={{ left: pct(t), transform: tickShift(t) }}
         >
           <span className="h-1 w-px bg-border" />
-          <span className="font-mono text-[10px] whitespace-nowrap text-muted-foreground tabular-nums">
+          <span className="text-[10px] whitespace-nowrap text-muted-foreground tabular-nums">
             {moment(range.startMs + (range.endMs - range.startMs) * t).format(format)}
           </span>
         </div>
@@ -322,16 +327,24 @@ export function TracesTimeline({ runs, range, selection, onSelect }: TracesTimel
       tabIndex={0}
       onKeyDown={onKeyDown}
     >
-      <div className="mb-4 flex items-center">
-        <span className="rounded border border-border bg-muted/50 px-1.5 py-px font-mono text-[10px] text-muted-foreground">
-          Total {formatSpan(range.endMs - range.startMs)}
+      <div className="mb-4 flex items-center justify-between text-[11px] text-muted-foreground tabular-nums">
+        <span>Total {formatSpan(range.endMs - range.startMs)}</span>
+        <span className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5">
+            <span className="size-[5px] rounded-full bg-[#0011b3] dark:bg-[#8b9bff]" />
+            runs
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="size-[5px] rounded-full bg-[#eb6b93]" />
+            failed
+          </span>
         </span>
       </div>
       <div
         ref={areaRef}
         role="presentation"
         data-testid="timeline-area"
-        className="relative flex h-14 cursor-crosshair touch-none items-end border-b border-border"
+        className="relative flex h-14 cursor-crosshair touch-none items-end"
         onPointerDown={(e) => begin("select", e)}
         onPointerMove={onMove}
         onPointerUp={onUp}
@@ -340,7 +353,7 @@ export function TracesTimeline({ runs, range, selection, onSelect }: TracesTimel
       >
         {hover !== null && !drag && (
           <div
-            className="pointer-events-none absolute inset-y-0 w-px bg-info"
+            className="pointer-events-none absolute inset-y-0 w-px bg-foreground/40"
             style={{ left: pct((hover + 0.5) / BUCKETS) }}
             data-testid="timeline-cursor"
           />
