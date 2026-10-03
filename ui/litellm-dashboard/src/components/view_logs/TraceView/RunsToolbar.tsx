@@ -40,7 +40,7 @@ export function RunsToolbar({
 }: RunsToolbarProps) {
   const agentItems = [{ value: ALL_AGENTS, label: "All agents" }, ...agents.map((s) => ({ value: s, label: s }))];
   return (
-    <div className="flex min-h-11 shrink-0 flex-wrap items-center gap-2 border-b border-border bg-card px-3 py-2">
+    <div className="flex min-h-14 shrink-0 flex-wrap items-center gap-2 border-b border-border bg-background px-3 py-3">
       <div className="relative w-full max-w-[380px]">
         <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -48,7 +48,7 @@ export function RunsToolbar({
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Search input or trace ID"
           aria-label="Search runs"
-          className="h-7 pl-8 text-[12px]"
+          className="h-8 rounded-lg border-transparent bg-muted/60 pl-8 text-[13px] shadow-none focus-visible:bg-background"
         />
       </div>
       <Select
@@ -56,7 +56,11 @@ export function RunsToolbar({
         value={agent}
         onValueChange={(value: string | null) => value !== null && onAgentChange(value)}
       >
-        <SelectTrigger size="sm" className="h-7 min-w-[130px] text-[12px]" aria-label="Filter by agent">
+        <SelectTrigger
+          size="sm"
+          className="h-8 min-w-[130px] rounded-lg border-transparent bg-muted/60 text-[13px] shadow-none hover:bg-muted"
+          aria-label="Filter by agent"
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -72,7 +76,11 @@ export function RunsToolbar({
         value={status}
         onValueChange={(value: RunStatusFilter | null) => value !== null && onStatusChange(value)}
       >
-        <SelectTrigger size="sm" className="h-7 min-w-[110px] text-[12px]" aria-label="Filter by status">
+        <SelectTrigger
+          size="sm"
+          className="h-8 min-w-[110px] rounded-lg border-transparent bg-muted/60 text-[13px] shadow-none hover:bg-muted"
+          aria-label="Filter by status"
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
